@@ -89,7 +89,7 @@ It deploys the lambda function by AWS SAM.
   "subject": {
     "S": "192.0.2.1/32:6"
   },
-  "networkAclId": {
+  "networkAclID": {
     "S": "acl-0ea1f54ca7EXAMPLE"
   }
 }
