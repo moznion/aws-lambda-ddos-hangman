@@ -65,7 +65,7 @@ It deploys the lambda function by AWS SAM.
   - DynamoDB Streams' shard iterator is stacked if the function's error has not been cleared
     - so perhaps this parameter is necessary to proceed forward continuously
 
-## What the item should be put on the DynamoDB table
+## What an item should be put on the DynamoDB table
 
 - `subject` (string);
   - the partition key
@@ -74,13 +74,26 @@ It deploys the lambda function by AWS SAM.
     - `(?<cidr>[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}):(<protocol>'[0-9]+)(?<port_range>:[0-9]{1,5}-[0-9]{1,5})?`
       - `protocol` means the protocol number to deny (e.g. 6=TCP, 17=UDP)
     - examples:
-      - `192.168.1.1/32:6`
-      - `192.168.1.1/32:6:22-80`
+      - `192.0.2.1/32:6`
+      - `192.0.2.1/32:6:22-80`
   - if ports were specified, the ACL will be applied for only the ports
     - on the other hand, the ACL will be applied all of the ports
   - notice: the port specifying is only available on TCP/UDP
-- `NetworkAclID` (string):
+- `networkAclId` (string):
   - network ACL ID to apply the rules
+
+### Example
+
+```json
+{
+  "subject": {
+    "S": "192.0.2.1/32:6"
+  },
+  "networkAclId": {
+    "S": "acl-0ea1f54ca7EXAMPLE"
+  }
+}
+```
 
 ## License
 
