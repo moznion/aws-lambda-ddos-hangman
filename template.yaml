@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ddos_hangman
+
+  An AWS Lambda function to drop the inbound requests from attackers on a network ACL layer.
+
+Globals:
+  Function:
+    Timeout: 30
+
+Resources:
+  DDoSHangmanExecuteFunction:
+    Type: AWS::Serverless::Function
+      Properties:
+        CodeUri: execute/
+        Handler: execute
+        FunctionName: ddos-hangman-execute
+        Runtime: go1.x
+        Tracing: PassThrough
+        MemorySize: 128
+        Timeout: 30
+        Role: arn:aws:iam::${your-account}:role/${your-role-name}
+        Events:
+          CatchAll:
+            Type: DynamoDB
+            Properties:
+              Stream: arn:aws:dynamodb:${your-region}:${your-account}:table/${your-table-name}/stream/${your-stream}
+              StartingPosition: TRIM_HORIZON
+              BatchSize: 100
+              Enabled: true
+        Environment:
+          Variables:
+            REGION: edit-here
+            BEGIN_RULE_NUMBER: edit-here
+            IGNORE_ERROR: edit-here
+
