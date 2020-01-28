@@ -97,9 +97,11 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 			return err
 		}
 
-		err = releaseDenyingByNACL(deniedApplicant.NetworkACLID, deniedApplicant.ACLRuleNumber)
-		if err != nil {
-			return err
+		if deniedApplicant.ACLRuleNumber != 0 {
+			err = releaseDenyingByNACL(deniedApplicant.NetworkACLID, deniedApplicant.ACLRuleNumber)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
