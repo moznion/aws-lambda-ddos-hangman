@@ -42,7 +42,7 @@ func handler(ctx context.Context, event events.DynamoDBEvent) (string, error) {
 	for _, record := range event.Records {
 		err := handleRecord(record)
 		if err != nil {
-			log.Printf("[error] %w\n", err)
+			log.Printf("[error] %s\n", err)
 			if shouldIgnoreError {
 				log.Print("[info] continued\n")
 				continue
