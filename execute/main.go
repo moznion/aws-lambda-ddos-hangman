@@ -70,6 +70,7 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 		if err != nil {
 			return err
 		}
+		log.Printf("[info] inserted denied applicant: %#v\n", deniedApplicant)
 
 		subject := deniedApplicant.Subject
 		cidr, protocolNumber, fromPort, toPort, err := parseSubject(subject)
@@ -96,6 +97,7 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 		if err != nil {
 			return err
 		}
+		log.Printf("[info] removed denied applicant: %#v\n", deniedApplicant)
 
 		if deniedApplicant.ACLRuleNumber != 0 {
 			err = releaseDenyingByNACL(deniedApplicant.NetworkACLID, deniedApplicant.ACLRuleNumber)
