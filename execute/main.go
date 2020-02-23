@@ -73,18 +73,18 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 		}
 		log.Printf("[info] inserted denied applicant: %#v\n", deniedApplicant)
 
-		subject := deniedApplicant.Subject
-		_, cidr, protocolNumber, fromPort, toPort, err := parseSubject(subject)
+		subjectString := deniedApplicant.Subject
+		subject, err := data.ParseSubjectString(subjectString)
 		if err != nil {
 			return err
 		}
 
-		aclRuleNumber, err := denyByNACL(deniedApplicant.NetworkACLID, protocolNumber, cidr, fromPort, toPort)
+		aclRuleNumber, err := denyByNACL(deniedApplicant.NetworkACLID, subject)
 		if err != nil {
 			return err
 		}
 
-		err = markACLRuleNumberOnDynamodbTable(tableName, subject, aclRuleNumber)
+		err = markACLRuleNumberOnDynamodbTable(tableName, subjectString, aclRuleNumber)
 		if err != nil {
 			return err
 		}
@@ -110,12 +110,12 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 	return nil
 }
 
-func denyByNACL(networkACLID string, protocolNumber int64, cidrBlock string, fromPort int64, toPort int64) (int64, error) {
+func denyByNACL(networkACLID string, subject *data.Subject) (int64, error) {
 	var portRange *ec2.PortRange
-	if fromPort != 0 && toPort != 0 {
+	if subject.FromPort != 0 && subject.ToPort != 0 {
 		portRange = &ec2.PortRange{
-			From: aws.Int64(fromPort),
-			To:   aws.Int64(toPort),
+			From: aws.Int64(subject.FromPort),
+			To:   aws.Int64(subject.ToPort),
 		}
 	}
 
@@ -165,10 +165,10 @@ func denyByNACL(networkACLID string, protocolNumber int64, cidrBlock string, fro
 
 		// TODO IPv6 supporting
 		_, err = ec2Srv.CreateNetworkAclEntry(&ec2.CreateNetworkAclEntryInput{
-			CidrBlock:    aws.String(cidrBlock),
+			CidrBlock:    aws.String(subject.CIDR),
 			Egress:       ingressMode,
 			NetworkAclId: aws.String(networkACLID),
-			Protocol:     aws.String(fmt.Sprintf("%d", protocolNumber)),
+			Protocol:     aws.String(fmt.Sprintf("%d", subject.ProtocolNumber)),
 			PortRange:    portRange,
 			RuleAction:   aws.String(ec2.RuleActionDeny),
 			RuleNumber:   aws.Int64(ruleNumber),
