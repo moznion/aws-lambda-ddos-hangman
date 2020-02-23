@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/moznion/aws-lambda-ddos-hangman/execute/internal/data"
 )
 
 const (
@@ -65,7 +66,7 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 		if err != nil {
 			return err
 		}
-		var deniedApplicant DeniedApplicant
+		var deniedApplicant data.DeniedApplicant
 		err = dynamodbattribute.UnmarshalMap(image, &deniedApplicant)
 		if err != nil {
 			return err
@@ -92,7 +93,7 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 		if err != nil {
 			return err
 		}
-		var deniedApplicant DeniedApplicant
+		var deniedApplicant data.DeniedApplicant
 		err = dynamodbattribute.UnmarshalMap(image, &deniedApplicant)
 		if err != nil {
 			return err
