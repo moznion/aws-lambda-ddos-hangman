@@ -74,7 +74,7 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 		log.Printf("[info] inserted denied applicant: %#v\n", deniedApplicant)
 
 		subject := deniedApplicant.Subject
-		cidr, protocolNumber, fromPort, toPort, err := parseSubject(subject)
+		_, cidr, protocolNumber, fromPort, toPort, err := parseSubject(subject)
 		if err != nil {
 			return err
 		}
