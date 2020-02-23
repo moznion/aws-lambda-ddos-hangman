@@ -16,7 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/moznion/aws-lambda-ddos-hangman/execute/internal/data"
+	"github.com/moznion/aws-lambda-ddos-hangman/execute/data"
 )
 
 const (
