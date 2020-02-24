@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.13
       - image: amazon/dynamodb-local:1.12.0
         port: 7750:8000
     working_directory: /go/src/github.com/moznion/aws-lambda-ddos-hangman
