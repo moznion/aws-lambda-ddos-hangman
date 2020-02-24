@@ -1,6 +1,4 @@
-# aws-lambda-ddos-hangman
-
-__NOTICE: THIS PROJECT UNDER DEVELOPMENT, ALPHA QUALITY__
+# aws-lambda-ddos-hangman [![CircleCI](https://circleci.com/gh/moznion/aws-lambda-ddos-hangman.svg?style=svg)](https://circleci.com/gh/moznion/aws-lambda-ddos-hangman) [![GoDoc](https://godoc.org/github.com/moznion/aws-lambda-ddos-hangman?status.svg)](https://godoc.org/github.com/moznion/aws-lambda-ddos-hangman) [![Go Report Card](https://goreportcard.com/badge/github.com/moznion/aws-lambda-ddos-hangman)](https://goreportcard.com/report/github.com/moznion/aws-lambda-ddos-hangman)
 
 ddos-hangman is an AWS Lambda function to drop the inbound requests from attackers on a network ACL layer.
 
@@ -57,6 +55,8 @@ It deploys the lambda function by AWS SAM.
 
 - `REGION`:
   - AWS region name which you would like to use this on
+- `TABLE_NAME`
+  - DynamoDB table name for denied applicants
 - `BEGIN_RULE_NUMBER`:
   - the beginning number of ACL rule; this lambda tries to create ACL rule according to this value incrementally
     - e.g. if you specify this parameter as 100, this lambda tries to create an ACL rule with #100. If the number has been already used, it retries to create that with #101...
@@ -71,23 +71,25 @@ It deploys the lambda function by AWS SAM.
   - the partition key
   - this function applies denying rule for this target
   - it has to follow the following regexp pattern:
-    - `(?<cidr>[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}):(<protocol>'[0-9]+)(?<port_range>:[0-9]{1,5}-[0-9]{1,5})?`
+    - `(?<created_at_epoch_millis>[0-9]+):(?<cidr>[0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}[.][0-9]{1,3}/[0-9]{1,2}):(?<protocol>[0-9]+)(?::(?<port_range>[0-9]{1,5}-[0-9]{1,5}))?`
       - `protocol` means the protocol number to deny (e.g. 6=TCP, 17=UDP)
     - examples:
-      - `192.0.2.1/32:6`
-      - `192.0.2.1/32:6:22-80`
+      - `1582425243392:192.0.2.1/32:6`
+      - `1582425243392:192.0.2.1/32:6:22-80`
   - if ports were specified, the ACL will be applied for only the ports
     - on the other hand, the ACL will be applied all of the ports
   - notice: the port specifying is only available on TCP/UDP
 - `networkAclId` (string):
   - network ACL ID to apply the rules
 
+You can use the library that is provided by this repository for this purpose if you use golang.
+
 ### Example
 
 ```json
 {
   "subject": {
-    "S": "192.0.2.1/32:6"
+    "S": "1582425243392:192.0.2.1/32:6"
   },
   "networkAclID": {
     "S": "acl-0ea1f54ca7EXAMPLE"
