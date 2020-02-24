@@ -15,7 +15,7 @@ import (
 
 const tableName = "test-denied-applicants"
 const dynamodbEndpoint = "http://127.0.0.1"
-const dynamodbPort = 7750
+const dynamodbPort = 8000
 const subjectKeyName = "subject"
 
 var d *dynamodb.DynamoDB

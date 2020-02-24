@@ -4,7 +4,7 @@ services:
     container_name: 'dynamodb-local'
     build: ./docker/dynamodb-local/
     ports:
-      - "7750:8000"
+      - "8000:8000"
     volumes:
       - ".:/home/dynamodblocal/data"
     command: "-Djava.library.path=./DynamoDBLocal_lib -jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
