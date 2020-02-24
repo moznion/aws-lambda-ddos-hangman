@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -34,7 +33,6 @@ var beginRuleNumber = os.Getenv(beginRuleNumberEnvVarKey)
 var shouldIgnoreError = os.Getenv(ignoreErrorEnvVarKey) != ""
 var tableName = os.Getenv(tableNameEnvVarKey)
 
-var ingressMode = aws.Bool(false)
 var sess = session.Must(session.NewSessionWithOptions(session.Options{
 	Config: aws.Config{
 		Region: aws.String(region),
@@ -42,7 +40,9 @@ var sess = session.Must(session.NewSessionWithOptions(session.Options{
 }))
 var ec2Srv = ec2.New(sess)
 var dynamodbSrv = dynamodb.New(sess)
+
 var deniedApplicantRepo repo.DeniedApplicantRepo = repo.NewDeniedApplicantRepoImpl(dynamodbSrv, tableName)
+var naclClient internal.NACLClient = internal.NewNACLClientImpl(ec2Srv)
 
 func handler(ctx context.Context, event events.DynamoDBEvent) (string, error) {
 	for _, record := range event.Records {
@@ -101,7 +101,7 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 		log.Printf("[info] removed denied applicant: %#v\n", deniedApplicant)
 
 		if deniedApplicant.ACLRuleNumber != 0 {
-			err = releaseDenyingByNACL(deniedApplicant.NetworkACLID, deniedApplicant.ACLRuleNumber)
+			err = naclClient.ReleaseDenyingByNACL(deniedApplicant.NetworkACLID, deniedApplicant.ACLRuleNumber, false)
 			if err != nil {
 				return err
 			}
@@ -124,14 +124,7 @@ func denyByNACL(networkACLID string, subject *data.Subject) (int64, error) {
 		return 0, err
 	}
 
-	acls, err := ec2Srv.DescribeNetworkAcls(&ec2.DescribeNetworkAclsInput{
-		Filters: []*ec2.Filter{
-			{
-				Name:   aws.String("network-acl-id"),
-				Values: []*string{aws.String(networkACLID)},
-			},
-		},
-	})
+	acls, err := naclClient.RetrieveNACLEntries(networkACLID)
 	if err != nil {
 		return 0, err
 	}
@@ -163,16 +156,7 @@ func denyByNACL(networkACLID string, subject *data.Subject) (int64, error) {
 			return 0, errors.New("there is no available rule number (upper limit exceeded)")
 		}
 
-		// TODO IPv6 supporting
-		_, err = ec2Srv.CreateNetworkAclEntry(&ec2.CreateNetworkAclEntryInput{
-			CidrBlock:    aws.String(subject.CIDR),
-			Egress:       ingressMode,
-			NetworkAclId: aws.String(networkACLID),
-			Protocol:     aws.String(fmt.Sprintf("%d", subject.ProtocolNumber)),
-			PortRange:    portRange,
-			RuleAction:   aws.String(ec2.RuleActionDeny),
-			RuleNumber:   aws.Int64(ruleNumber),
-		})
+		err = naclClient.DenyByNACL(subject.CIDR, subject.ProtocolNumber, networkACLID, ruleNumber, portRange, false)
 		if err == nil {
 			break
 		}
@@ -197,18 +181,6 @@ func denyByNACL(networkACLID string, subject *data.Subject) (int64, error) {
 	}
 
 	return ruleNumber, nil
-}
-
-func releaseDenyingByNACL(networkACLID string, ruleNumber int64) error {
-	_, err := ec2Srv.DeleteNetworkAclEntry(&ec2.DeleteNetworkAclEntryInput{
-		Egress:       ingressMode,
-		NetworkAclId: aws.String(networkACLID),
-		RuleNumber:   aws.Int64(ruleNumber),
-	})
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func main() {
