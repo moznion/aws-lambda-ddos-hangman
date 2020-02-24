@@ -111,14 +111,6 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 }
 
 func denyByNACL(networkACLID string, subject *data.Subject) (int64, error) {
-	var portRange *ec2.PortRange
-	if subject.FromPort != 0 && subject.ToPort != 0 {
-		portRange = &ec2.PortRange{
-			From: aws.Int64(subject.FromPort),
-			To:   aws.Int64(subject.ToPort),
-		}
-	}
-
 	ruleNumber, err := strconv.ParseInt(beginRuleNumber, 10, 64)
 	if err != nil {
 		return 0, err
@@ -129,28 +121,21 @@ func denyByNACL(networkACLID string, subject *data.Subject) (int64, error) {
 		return 0, err
 	}
 
-	ruleNumBag := make(map[int64]bool)
-	for _, acl := range acls.NetworkAcls {
-		for _, entries := range acl.Entries {
-			ruleNumber := entries.RuleNumber
-			if ruleNumber != nil {
-				ruleNumBag[*ruleNumber] = true
-			}
-		}
-	}
+	ruleNumSet := convertNetworkACLsToRuleNumberSet(acls.NetworkAcls)
 
 	for {
 		if ruleNumber > ruleNumberUpperLimit {
 			return 0, errors.New("there is no available rule number (upper limit exceeded)")
 		}
 
-		if !ruleNumBag[ruleNumber] {
+		if !ruleNumSet[ruleNumber] {
 			break
 		}
 
 		ruleNumber++
 	}
 
+	portRange := subject.PortRange()
 	for {
 		if ruleNumber > ruleNumberUpperLimit {
 			return 0, errors.New("there is no available rule number (upper limit exceeded)")
@@ -185,4 +170,17 @@ func denyByNACL(networkACLID string, subject *data.Subject) (int64, error) {
 
 func main() {
 	lambda.Start(handler)
+}
+
+func convertNetworkACLsToRuleNumberSet(acls []*ec2.NetworkAcl) map[int64]bool {
+	ruleNumSet := make(map[int64]bool)
+	for _, acl := range acls {
+		for _, entries := range acl.Entries {
+			ruleNumber := entries.RuleNumber
+			if ruleNumber != nil {
+				ruleNumSet[*ruleNumber] = true
+			}
+		}
+	}
+	return ruleNumSet
 }

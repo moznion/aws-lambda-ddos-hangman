@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 type Subject struct {
@@ -58,4 +61,14 @@ func (s *Subject) String() string {
 		return fmt.Sprintf("%d:%s:%d", s.CreatedAtEpochMillis, s.CIDR, s.ProtocolNumber)
 	}
 	return fmt.Sprintf("%d:%s:%d:%d-%d", s.CreatedAtEpochMillis, s.CIDR, s.ProtocolNumber, s.FromPort, s.ToPort)
+}
+
+func (s *Subject) PortRange() *ec2.PortRange {
+	if s.FromPort != 0 && s.ToPort != 0 {
+		return &ec2.PortRange{
+			From: aws.Int64(s.FromPort),
+			To:   aws.Int64(s.ToPort),
+		}
+	}
+	return nil
 }
