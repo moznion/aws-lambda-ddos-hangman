@@ -15,11 +15,13 @@ ddos-hangman is an AWS Lambda function to drop the inbound requests from attacke
 This lambda function aims to drop the inbound requests from attackers.
 
 Once a client has wanted to deny access from the attacker, it just only needs to insert an item into DynamoDB.
-Then the lambda function get the inserted item through the DynamoDB Streams and apply the configuration
+Then the lambda function gets the inserted item through the DynamoDB Streams and applies the configuration
 to deny requests from attacker according to the item to Network ACL.
 (NOTICE: of course the DynamoDB table has to be activated the DynamoDB Streams)
 
-After it, if a client would like to release denying configuration, it requires to remove the item from the DynamoDB table.
+If the number of entries of network ACL reaches the maximum limit, it removes the oldest NACL entry like FIFO.
+
+After it, if a client would like to release denying configuration, it needs to remove the item from the DynamoDB table.
 This lambda function releases the configuration of Network ACL as similar to inserting.
 (NOTE: this method is much effective when used along with DynamoDB's TTL mechanism)
 
@@ -82,7 +84,7 @@ It deploys the lambda function by AWS SAM.
 - `networkAclId` (string):
   - network ACL ID to apply the rules
 
-You can use the library that is provided by this repository for this purpose if you use golang.
+You can use the library that is provided by this repository for this purpose if you use golang: [GoDoc](https://godoc.org/github.com/moznion/aws-lambda-ddos-hangman/execute/repo#DeniedApplicantRepo)
 
 ### Example
 
