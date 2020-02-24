@@ -20,3 +20,11 @@ type DeniedApplicant struct {
 	// ACLRuleNumber is the number that represents the NACL rule number.
 	ACLRuleNumber int64 `json:"aclRuleNumber"`
 }
+
+func NewDeniedApplicant(subject *Subject, networkACLID string, aclRuleNumber int64) *DeniedApplicant {
+	return &DeniedApplicant{
+		Subject:       subject.String(),
+		NetworkACLID:  networkACLID,
+		ACLRuleNumber: aclRuleNumber,
+	}
+}
