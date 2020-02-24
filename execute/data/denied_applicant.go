@@ -21,6 +21,7 @@ type DeniedApplicant struct {
 	ACLRuleNumber int64 `json:"aclRuleNumber"`
 }
 
+// NewDeniedApplicant creates new DeniedApplicant.
 func NewDeniedApplicant(subject *Subject, networkACLID string, aclRuleNumber int64) *DeniedApplicant {
 	return &DeniedApplicant{
 		Subject:       subject.String(),

@@ -10,6 +10,7 @@ import (
 	"github.com/moznion/aws-lambda-ddos-hangman/execute/data"
 )
 
+// DeniedApplicantRepoImpl is a concrete implementation of DeniedApplicantRepo.
 type DeniedApplicantRepoImpl struct {
 	dyn       *dynamodb.DynamoDB
 	tableName string
@@ -19,6 +20,7 @@ var (
 	errNoDeniedApplicant = errors.New("there is no denied applicant")
 )
 
+// NewDeniedApplicantRepoImpl creates a new DeniedApplicantRepoImpl.
 func NewDeniedApplicantRepoImpl(dyn *dynamodb.DynamoDB, tableName string) *DeniedApplicantRepoImpl {
 	return &DeniedApplicantRepoImpl{
 		dyn:       dyn,
@@ -26,6 +28,7 @@ func NewDeniedApplicantRepoImpl(dyn *dynamodb.DynamoDB, tableName string) *Denie
 	}
 }
 
+// DeleteOldestDeniedApplicant deletes the oldest entry.
 func (r *DeniedApplicantRepoImpl) DeleteOldestDeniedApplicant() error {
 	oldestDeniedApplicant, err := r.getOldestDeniedApplicant()
 	if err != nil {
@@ -43,6 +46,7 @@ func (r *DeniedApplicantRepoImpl) DeleteOldestDeniedApplicant() error {
 	return nil
 }
 
+// PutDeniedApplicant puts a new denied applicant entry.
 func (r *DeniedApplicantRepoImpl) PutDeniedApplicant(deniedApplicant *data.DeniedApplicant) error {
 	item, err := dynamodbattribute.MarshalMap(deniedApplicant)
 	if err != nil {
@@ -61,6 +65,7 @@ func (r *DeniedApplicantRepoImpl) PutDeniedApplicant(deniedApplicant *data.Denie
 	return nil
 }
 
+// UpdateACLRuleNumber updates an entry with given ACL rule number.
 func (r *DeniedApplicantRepoImpl) UpdateACLRuleNumber(subject *data.Subject, aclRuleNumber int64) error {
 	_, err := r.dyn.UpdateItem(&dynamodb.UpdateItemInput{
 		TableName: aws.String(r.tableName),

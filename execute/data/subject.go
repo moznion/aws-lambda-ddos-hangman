@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
+// Subject represents the subject to deny.
 type Subject struct {
 	CreatedAtEpochMillis uint64
 	CIDR                 string
@@ -24,6 +25,7 @@ var (
 	errInvalidSubjectFormat = errors.New("invalid subject string has come")
 )
 
+// ParseSubjectString parses string and make a new Subject.
 func ParseSubjectString(subjectString string) (*Subject, error) {
 	subjectSubmatch := subjectPattern.FindStringSubmatch(subjectString)
 	if len(subjectSubmatch) < 6 {
@@ -56,6 +58,7 @@ func ParseSubjectString(subjectString string) (*Subject, error) {
 	}, nil
 }
 
+// String converts a struct to string.
 func (s *Subject) String() string {
 	if s.FromPort == 0 || s.ToPort == 0 {
 		return fmt.Sprintf("%d:%s:%d", s.CreatedAtEpochMillis, s.CIDR, s.ProtocolNumber)
@@ -63,6 +66,7 @@ func (s *Subject) String() string {
 	return fmt.Sprintf("%d:%s:%d:%d-%d", s.CreatedAtEpochMillis, s.CIDR, s.ProtocolNumber, s.FromPort, s.ToPort)
 }
 
+// PortRange returns EC2 port-range according to the struct.
 func (s *Subject) PortRange() *ec2.PortRange {
 	if s.FromPort != 0 && s.ToPort != 0 {
 		return &ec2.PortRange{

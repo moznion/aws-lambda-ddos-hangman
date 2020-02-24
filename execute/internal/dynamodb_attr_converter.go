@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+// ConvertAttrValueMap converts Lambda's DynamoDBAttributeValue to aws-sdk's one.
 func ConvertAttrValueMap(image map[string]events.DynamoDBAttributeValue) (map[string]*dynamodb.AttributeValue, error) {
 	dbAttrMap := make(map[string]*dynamodb.AttributeValue)
 	for k, v := range image {
