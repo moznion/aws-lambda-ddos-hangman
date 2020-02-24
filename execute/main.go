@@ -17,18 +17,21 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/moznion/aws-lambda-ddos-hangman/execute/data"
+	"github.com/moznion/aws-lambda-ddos-hangman/execute/repo"
 )
 
 const (
 	regionEnvVarKey          = "REGION"
 	beginRuleNumberEnvVarKey = "BEGIN_RULE_NUMBER"
 	ignoreErrorEnvVarKey     = "IGNORE_ERROR"
+	tableNameEnvVarKey       = "TABLE_NAME"
 )
 const ruleNumberUpperLimit = 32766
 
 var region = os.Getenv(regionEnvVarKey)
 var beginRuleNumber = os.Getenv(beginRuleNumberEnvVarKey)
 var shouldIgnoreError = os.Getenv(ignoreErrorEnvVarKey) != ""
+var tableName = os.Getenv(tableNameEnvVarKey)
 
 var ingressMode = aws.Bool(false)
 var sess = session.Must(session.NewSessionWithOptions(session.Options{
@@ -38,6 +41,7 @@ var sess = session.Must(session.NewSessionWithOptions(session.Options{
 }))
 var ec2Srv = ec2.New(sess)
 var dynamodbSrv = dynamodb.New(sess)
+var deniedApplicantRepo repo.DeniedApplicantRepo = repo.NewDeniedApplicantRepoImpl(dynamodbSrv, tableName)
 
 func handler(ctx context.Context, event events.DynamoDBEvent) (string, error) {
 	for _, record := range event.Records {
@@ -55,11 +59,6 @@ func handler(ctx context.Context, event events.DynamoDBEvent) (string, error) {
 }
 
 func handleRecord(record events.DynamoDBEventRecord) error {
-	tableName, err := extractDynamodbTableNameFromEventSourceArn(record.EventSourceArn)
-	if err != nil {
-		return err
-	}
-
 	switch events.DynamoDBOperationType(record.EventName) {
 	case events.DynamoDBOperationTypeInsert:
 		image, err := convertAttrValueMap(record.Change.NewImage)
@@ -178,6 +177,15 @@ func denyByNACL(networkACLID string, subject *data.Subject) (int64, error) {
 		}
 
 		if aerr, ok := err.(awserr.Error); ok {
+			if aerr.Code() == "NetworkAclEntryLimitExceeded" {
+				// Remove the oldest denied applicant like FIFO.
+				err = deniedApplicantRepo.DeleteOldestDeniedApplicant()
+				if err != nil {
+					return 0, err
+				}
+				continue
+			}
+
 			if aerr.Code() == "NetworkAclEntryAlreadyExists" {
 				// retry with increment rule number
 				ruleNumber++

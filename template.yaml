@@ -34,4 +34,5 @@ Resources:
           REGION: edit-here
           BEGIN_RULE_NUMBER: edit-here
           IGNORE_ERROR: edit-here
+          TABLE_NAME: edit-here
 
