@@ -84,7 +84,7 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 			return err
 		}
 
-		err = markACLRuleNumberOnDynamodbTable(tableName, subjectString, aclRuleNumber)
+		err = deniedApplicantRepo.UpdateACLRuleNumber(subject, aclRuleNumber)
 		if err != nil {
 			return err
 		}
@@ -197,30 +197,6 @@ func denyByNACL(networkACLID string, subject *data.Subject) (int64, error) {
 	}
 
 	return ruleNumber, nil
-}
-
-func markACLRuleNumberOnDynamodbTable(tableName string, subject string, aclRuleNumber int64) error {
-	_, err := dynamodbSrv.UpdateItem(&dynamodb.UpdateItemInput{
-		TableName: aws.String(tableName),
-		Key: map[string]*dynamodb.AttributeValue{
-			"subject": {
-				S: aws.String(subject),
-			},
-		},
-		UpdateExpression: aws.String("SET #ACL_RULE_NUMBER = :aclRuleNumber"),
-		ExpressionAttributeNames: map[string]*string{
-			"#ACL_RULE_NUMBER": aws.String("aclRuleNumber"),
-		},
-		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":aclRuleNumber": {N: aws.String(fmt.Sprintf("%d", aclRuleNumber))},
-		},
-		ReturnValues: aws.String(dynamodb.ReturnConsumedCapacityNone),
-	})
-
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func releaseDenyingByNACL(networkACLID string, ruleNumber int64) error {

@@ -2,6 +2,7 @@ package repo
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -57,6 +58,30 @@ func (r *DeniedApplicantRepoImpl) PutDeniedApplicant(deniedApplicant *data.Denie
 		return err
 	}
 
+	return nil
+}
+
+func (r *DeniedApplicantRepoImpl) UpdateACLRuleNumber(subject *data.Subject, aclRuleNumber int64) error {
+	_, err := r.dyn.UpdateItem(&dynamodb.UpdateItemInput{
+		TableName: aws.String(r.tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			"subject": {
+				S: aws.String(subject.String()),
+			},
+		},
+		UpdateExpression: aws.String("SET #ACL_RULE_NUMBER = :aclRuleNumber"),
+		ExpressionAttributeNames: map[string]*string{
+			"#ACL_RULE_NUMBER": aws.String("aclRuleNumber"),
+		},
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":aclRuleNumber": {N: aws.String(fmt.Sprintf("%d", aclRuleNumber))},
+		},
+		ReturnValues: aws.String(dynamodb.ReturnConsumedCapacityNone),
+	})
+
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

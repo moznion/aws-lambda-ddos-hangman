@@ -103,3 +103,29 @@ func TestRemoveOldestDeniedApplicant(t *testing.T) {
 	applicant, err = repo.getOldestDeniedApplicant()
 	assert.EqualError(t, err, errNoDeniedApplicant.Error())
 }
+
+func TestUpdateACLRuleNumber(t *testing.T) {
+	setupTestTable(d)
+
+	subject := &data.Subject{
+		CreatedAtEpochMillis: uint64(time.Now().UnixNano() / int64(time.Millisecond)),
+		CIDR:                 "192.168.1.1/32",
+		ProtocolNumber:       6,
+		FromPort:             22,
+		ToPort:               80,
+	}
+
+	err := repo.PutDeniedApplicant(data.NewDeniedApplicant(subject, "acl-foo", 100))
+	assert.NoError(t, err)
+
+	applicant, err := repo.getOldestDeniedApplicant()
+	assert.NoError(t, err)
+	assert.EqualValues(t, 100, applicant.ACLRuleNumber)
+
+	err = repo.UpdateACLRuleNumber(subject, 200)
+	assert.NoError(t, err)
+
+	applicant, err = repo.getOldestDeniedApplicant()
+	assert.NoError(t, err)
+	assert.EqualValues(t, 200, applicant.ACLRuleNumber)
+}
