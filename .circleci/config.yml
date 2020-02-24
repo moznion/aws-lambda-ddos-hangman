@@ -7,5 +7,6 @@ jobs:
     working_directory: /go/src/github.com/moznion/aws-lambda-ddos-hangman
     steps:
       - checkout
+      - run: go get -u golang.org/x/lint/golint
       - run: make check
 
