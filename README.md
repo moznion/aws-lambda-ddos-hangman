@@ -5,9 +5,9 @@ ddos-hangman is an AWS Lambda function to drop the inbound requests from attacke
 ## Flow diagram
 
 ```
-[clinet] --put item--> [dynamodb] --insert event--> [              ] --apply denying--> [NACL (Network ACL Entry)]
-                           |                        [hangman lambda]                                ^
-                           +--------remove event--> [              ] --release denying--------------+
+[clinet] --put/delete item--> [dynamodb] --insert event--> +----------------+ --apply denying--> [NACL (Network ACL Entry)]
+                                  |                        | hangman lambda |                                ^
+                                  +--------remove event--> +----------------+ --release denying--------------+
 ```
 
 ## Description
