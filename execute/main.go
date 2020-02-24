@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/moznion/aws-lambda-ddos-hangman/execute/data"
+	"github.com/moznion/aws-lambda-ddos-hangman/execute/internal"
 	"github.com/moznion/aws-lambda-ddos-hangman/execute/repo"
 )
 
@@ -61,7 +62,7 @@ func handler(ctx context.Context, event events.DynamoDBEvent) (string, error) {
 func handleRecord(record events.DynamoDBEventRecord) error {
 	switch events.DynamoDBOperationType(record.EventName) {
 	case events.DynamoDBOperationTypeInsert:
-		image, err := convertAttrValueMap(record.Change.NewImage)
+		image, err := internal.ConvertAttrValueMap(record.Change.NewImage)
 		if err != nil {
 			return err
 		}
@@ -88,7 +89,7 @@ func handleRecord(record events.DynamoDBEventRecord) error {
 			return err
 		}
 	case events.DynamoDBOperationTypeRemove:
-		image, err := convertAttrValueMap(record.Change.OldImage)
+		image, err := internal.ConvertAttrValueMap(record.Change.OldImage)
 		if err != nil {
 			return err
 		}

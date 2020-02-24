@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-func convertAttrValueMap(image map[string]events.DynamoDBAttributeValue) (map[string]*dynamodb.AttributeValue, error) {
+func ConvertAttrValueMap(image map[string]events.DynamoDBAttributeValue) (map[string]*dynamodb.AttributeValue, error) {
 	dbAttrMap := make(map[string]*dynamodb.AttributeValue)
 	for k, v := range image {
 		var dbAttr dynamodb.AttributeValue
